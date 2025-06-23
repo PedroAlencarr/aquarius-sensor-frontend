@@ -350,6 +350,25 @@ header p {
   z-index: 1;
 }
 
+.timestamp {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 20px;
+  text-align: center;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.timestamp::before {
+  content: "";
+}
+
 /* Responsividade melhorada */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -471,10 +490,11 @@ header p {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  font-weight: 500;
 }
 
 .timestamp::before {
-  content: "🕒";
+  content: "";
 }
 
 .loading,

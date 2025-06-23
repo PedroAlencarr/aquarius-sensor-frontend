@@ -51,7 +51,7 @@ const SensorCard: React.FC<SensorCardProps> = ({ reading }) => {
       </div>
 
       <div className="timestamp">
-        {new Date(reading.timestamp).toLocaleString("pt-BR")}
+        📨 Recebido em: {new Date(reading.createdAt).toLocaleString("pt-BR")}
       </div>
     </div>
   );

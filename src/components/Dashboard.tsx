@@ -60,8 +60,15 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
         const data = await fetchTemperatureData();
-        setReadings(data);
-        checkTemperatureAlerts(data);
+
+        // Ordenar por createdAt do mais recente para o mais antigo
+        const sortedData: TemperatureReading[] = data.sort(
+          (a: TemperatureReading, b: TemperatureReading) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        setReadings(sortedData);
+        checkTemperatureAlerts(sortedData);
         setError(null);
       } catch (err) {
         setError("Falha ao carregar dados de temperatura");
