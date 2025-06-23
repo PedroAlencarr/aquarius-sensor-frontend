@@ -1,6 +1,5 @@
-// filepath: d:\Embarcados\aquarius-sensor-frontend\src\components\LoginForm.tsx
 import React, { useState } from "react";
-import { signIn } from "../lib/auth-client";
+import { useAuth } from "../contexts/AuthContext";
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -12,29 +11,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const { login } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    try {
-      const result = await signIn.email({
-        email,
-        password,
-      });
+    console.log("🚀 Tentando login para:", email);
 
-      if (result.error) {
-        setError(result.error.message || "Erro ao fazer login");
-      } else {
-        // Login bem-sucedido, recarregar página
-        window.location.reload();
-      }
-    } catch (err) {
-      setError("Erro de conexão. Verifique se o backend está funcionando.");
-      console.error("Login error:", err);
-    } finally {
-      setIsLoading(false);
+    const success = await login(email, password);
+
+    if (success) {
+      console.log("✅ Login bem-sucedido!");
+      // O contexto já atualizou o estado, não precisa recarregar a página
+    } else {
+      setError("Email ou senha incorretos");
     }
+
+    setIsLoading(false);
   };
 
   return (

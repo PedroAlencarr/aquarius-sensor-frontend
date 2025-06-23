@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./App.css";
 import AuthPage from "./components/AuthPage";
 import Dashboard from "./components/Dashboard";
@@ -6,15 +6,7 @@ import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  useEffect(() => {
-    console.log("Estado da autenticação:", {
-      isAuthenticated,
-      isLoading,
-      user,
-    });
-  }, [isAuthenticated, isLoading, user]);
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (

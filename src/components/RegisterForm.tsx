@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { signUp } from "../lib/auth-client";
+import { useAuth } from "../contexts/AuthContext";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -13,6 +13,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,33 +34,26 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       return;
     }
 
-    try {
-      const result = await signUp.email({
-        email,
-        password,
-        name,
-      });
+    console.log("🚀 Tentando criar conta para:", email);
 
-      if (result.error) {
-        setError(result.error.message || "Erro ao criar conta");
-      } else {
-        setSuccess("Conta criada com sucesso! Você pode fazer login agora.");
-        // Limpar formulário
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setName("");
-        // Mudar para login após alguns segundos
-        setTimeout(() => {
-          onSwitchToLogin();
-        }, 2000);
-      }
-    } catch (err) {
-      setError("Erro de conexão. Verifique se o backend está funcionando.");
-      console.error("Register error:", err);
-    } finally {
-      setIsLoading(false);
+    const success = await register(email, password, name);
+
+    if (success) {
+      setSuccess("Conta criada com sucesso! Você pode fazer login agora.");
+      // Limpar formulário
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setName("");
+      // Mudar para login após alguns segundos
+      setTimeout(() => {
+        onSwitchToLogin();
+      }, 2000);
+    } else {
+      setError("Erro ao criar conta. Tente novamente.");
     }
+
+    setIsLoading(false);
   };
 
   return (

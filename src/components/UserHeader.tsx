@@ -1,17 +1,11 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { signOut } from "../lib/auth-client";
 
 const UserHeader: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      window.location.reload(); // Recarrega para limpar o estado
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   if (!user) return null;
