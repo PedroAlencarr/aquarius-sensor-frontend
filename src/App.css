@@ -1221,3 +1221,14 @@ header p {
     align-items: center;
   }
 }
+
+/* Chart card styling */
+.chart-section {
+  margin: 2rem 0;
+}
+.chart-card {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 25px;
+  color: #333333;
+}

@@ -3,12 +3,105 @@ import NotificationPanel from "../components/NotificationPanel";
 import { fetchTemperatureData } from "../services/api";
 import { TemperatureReading } from "../types";
 import SensorCard from "./SensorCard";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  annotationPlugin
+);
 
 const Dashboard: React.FC = () => {
   const [readings, setReadings] = useState<TemperatureReading[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
+
+  // Prepare chart data for temperature over time
+  const testData = [
+    { createdAt: new Date(), temperature: 5 },
+    { createdAt: new Date(Date.now() - 60000), temperature: 6 },
+    { createdAt: new Date(Date.now() - 120000), temperature: 4 },
+  ];
+  
+  const chartData = {
+    labels: readings.length > 0 
+      ? [...readings].reverse().map((r) => new Date(r.createdAt).toLocaleTimeString())
+      : testData.map((r) => new Date(r.createdAt).toLocaleTimeString()),
+    datasets: [
+      {
+        label: "Temperatura (°C)",
+        data: readings.length > 0 
+          ? [...readings].reverse().map((r) => r.temperature)
+          : testData.map((r) => r.temperature),
+        borderColor: "rgb(75, 192, 192)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+      },
+    ],
+  };
+
+  const chartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: "top" as const },
+      title: { display: false },
+      annotation: {
+        annotations: {
+          lowerLimit: {
+            type: "line",
+            yMin: 2,
+            yMax: 2,
+            borderColor: "#f44336",
+            borderWidth: 2,
+            label: {
+              content: "2°C",
+              display: true,
+              position: "start",
+              backgroundColor: "#f44336",
+            },
+          },
+          upperLimit: {
+            type: "line",
+            yMin: 8,
+            yMax: 8,
+            borderColor: "#f44336",
+            borderWidth: 2,
+            label: {
+              content: "8°C",
+              display: true,
+              position: "start",
+              backgroundColor: "#f44336",
+            },
+          },
+        },
+      },
+    },
+    scales: {
+      x: { title: { display: true, text: "Hora" } },
+      y: {
+        title: { display: true, text: "Temperatura (°C)" },
+        suggestedMin: 0,
+        suggestedMax: 15,
+      },
+    },
+  };
 
   // Função para verificar alertas baseado nas temperaturas
   const checkTemperatureAlerts = (readings: TemperatureReading[]) => {
@@ -161,6 +254,14 @@ const Dashboard: React.FC = () => {
             <span className="info-label">Atualização:</span>
             <span className="update-time">A cada 30 segundos</span>
           </div>
+        </div>
+      </div>
+
+      {/* Chart showing temperature over time */}
+      <div className="chart-section">
+        <div className="chart-card">
+          <h2>Temperatura ao longo do tempo</h2>
+          <Line options={chartOptions} data={chartData} style={{ height: '300px' }} />
         </div>
       </div>
 
