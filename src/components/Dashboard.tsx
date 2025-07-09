@@ -247,7 +247,7 @@ const Dashboard: React.FC = () => {
     const interval = setInterval(getTemperatureData, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [checkTemperatureAlerts]);
 
   if (loading) {
     return (
