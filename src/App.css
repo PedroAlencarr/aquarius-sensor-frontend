@@ -1231,4 +1231,12 @@ header p {
   border-radius: 15px;
   padding: 25px;
   color: #333333;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h2 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 600;
 }

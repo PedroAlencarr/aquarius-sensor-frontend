@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+} from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Line } from "react-chartjs-2";
 import NotificationPanel from "../components/NotificationPanel";
 import { fetchTemperatureData } from "../services/api";
 import { TemperatureReading } from "../types";
 import SensorCard from "./SensorCard";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import annotationPlugin from "chartjs-plugin-annotation";
 
 ChartJS.register(
   CategoryScale,
@@ -27,126 +27,196 @@ ChartJS.register(
   annotationPlugin
 );
 
+// Memoized Chart component to prevent unnecessary re-renders
+const TemperatureChart = React.memo(
+  ({ options, data }: { options: any; data: any }) => {
+    console.log("TemperatureChart render:", { data, options: !!options });
+    return (
+      <div style={{ height: "400px", width: "100%" }}>
+        <Line options={options} data={data} />
+      </div>
+    );
+  }
+);
+TemperatureChart.displayName = "TemperatureChart";
+
 const Dashboard: React.FC = () => {
   const [readings, setReadings] = useState<TemperatureReading[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [alerts, setAlerts] = useState<any[]>([]);
-
-  // Prepare chart data for temperature over time
-  const testData = [
-    { createdAt: new Date(), temperature: 5 },
-    { createdAt: new Date(Date.now() - 60000), temperature: 6 },
-    { createdAt: new Date(Date.now() - 120000), temperature: 4 },
-  ];
-  
-  const chartData = {
-    labels: readings.length > 0 
-      ? [...readings].reverse().map((r) => new Date(r.createdAt).toLocaleTimeString())
-      : testData.map((r) => new Date(r.createdAt).toLocaleTimeString()),
-    datasets: [
+  const [alerts, setAlerts] = useState<any[]>([]); // Static fallback data to prevent constant re-renders
+  const fallbackData = useMemo(() => {
+    const now = Date.now();
+    return [
       {
-        label: "Temperatura (°C)",
-        data: readings.length > 0 
-          ? [...readings].reverse().map((r) => r.temperature)
-          : testData.map((r) => r.temperature),
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        _id: "fallback-1",
+        deviceId: "ESP32-Demo",
+        createdAt: new Date(now - 120000).toISOString(),
+        timestamp: new Date(now - 120000).toISOString(),
+        updatedAt: new Date(now - 120000).toISOString(),
+        temperature: 4,
       },
-    ],
-  };
-
-  const chartOptions: any = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: "top" as const },
-      title: { display: false },
-      annotation: {
-        annotations: {
-          lowerLimit: {
-            type: "line",
-            yMin: 2,
-            yMax: 2,
-            borderColor: "#f44336",
-            borderWidth: 2,
-            label: {
-              content: "2°C",
-              display: true,
-              position: "start",
-              backgroundColor: "#f44336",
+      {
+        _id: "fallback-2",
+        deviceId: "ESP32-Demo",
+        createdAt: new Date(now - 60000).toISOString(),
+        timestamp: new Date(now - 60000).toISOString(),
+        updatedAt: new Date(now - 60000).toISOString(),
+        temperature: 6,
+      },
+      {
+        _id: "fallback-3",
+        deviceId: "ESP32-Demo",
+        createdAt: new Date(now).toISOString(),
+        timestamp: new Date(now).toISOString(),
+        updatedAt: new Date(now).toISOString(),
+        temperature: 5,
+      },
+    ];
+  }, []);
+  // Chart options - memoized to prevent re-renders
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 0 },
+      plugins: {
+        legend: { position: "top" as const },
+        title: { display: false },
+        annotation: {
+          annotations: {
+            lowerLimit: {
+              type: "line" as const,
+              yMin: 2,
+              yMax: 2,
+              borderColor: "#f44336",
+              borderWidth: 2,
+              label: {
+                content: "2°C",
+                display: true,
+                position: "start" as const,
+                backgroundColor: "#f44336",
+              },
             },
-          },
-          upperLimit: {
-            type: "line",
-            yMin: 8,
-            yMax: 8,
-            borderColor: "#f44336",
-            borderWidth: 2,
-            label: {
-              content: "8°C",
-              display: true,
-              position: "start",
-              backgroundColor: "#f44336",
+            upperLimit: {
+              type: "line" as const,
+              yMin: 8,
+              yMax: 8,
+              borderColor: "#f44336",
+              borderWidth: 2,
+              label: {
+                content: "8°C",
+                display: true,
+                position: "start" as const,
+                backgroundColor: "#f44336",
+              },
             },
           },
         },
       },
-    },
-    scales: {
-      x: { title: { display: true, text: "Hora" } },
-      y: {
-        title: { display: true, text: "Temperatura (°C)" },
-        suggestedMin: 0,
-        suggestedMax: 15,
+      scales: {
+        x: {
+          title: { display: true, text: "Hora" },
+          type: "category" as const,
+        },
+        y: {
+          title: { display: true, text: "Temperatura (°C)" },
+          type: "linear" as const,
+          min: 0,
+          max: 22,
+          ticks: {
+            stepSize: 2,
+          },
+        },
       },
-    },
-  };
+      interaction: {
+        intersect: false,
+      },
+      elements: {
+        point: {
+          radius: 4,
+        },
+      },
+    }),
+    []
+  ); // Chart data - only recalculated when readings change
+  const chartData = useMemo(() => {
+    const points =
+      readings.length > 0 ? [...readings].slice(0, 10).reverse() : fallbackData;
 
-  // Função para verificar alertas baseado nas temperaturas
-  const checkTemperatureAlerts = (readings: TemperatureReading[]) => {
-    const newAlerts: any[] = [];
-
-    readings.forEach((reading) => {
-      const temp = reading.temperature;
-      const deviceName = reading.deviceId;
-
-      // Faixa ideal para vacinas: 2°C a 8°C
-      if (temp < 2) {
-        newAlerts.push({
-          id: `${reading._id}_cold`,
-          type: "critical",
-          deviceId: deviceName,
-          temperature: temp,
-          message: `🚨 CRÍTICO: Temperatura muito baixa (${temp}°C)`,
-          description: "Vacinas podem congelar e perder eficácia",
-          timestamp: new Date(reading.timestamp),
-        });
-      } else if (temp > 8) {
-        newAlerts.push({
-          id: `${reading._id}_hot`,
-          type: "critical",
-          deviceId: deviceName,
-          temperature: temp,
-          message: `🚨 CRÍTICO: Temperatura muito alta (${temp}°C)`,
-          description: "Vacinas podem perder potência e eficácia",
-          timestamp: new Date(reading.timestamp),
-        });
-      } else if (temp < 2.5 || temp > 7.5) {
-        newAlerts.push({
-          id: `${reading._id}_warning`,
-          type: "warning",
-          deviceId: deviceName,
-          temperature: temp,
-          message: `⚠️ ATENÇÃO: Temperatura próxima ao limite (${temp}°C)`,
-          description: "Monitorar de perto - pode afetar as vacinas",
-          timestamp: new Date(reading.timestamp),
-        });
-      }
+    console.log("Chart data calculation:", {
+      readingsLength: readings.length,
+      pointsLength: points.length,
+      points: points.slice(0, 3), // Log first 3 points for debugging
     });
 
-    setAlerts(newAlerts);
-  };
+    const result = {
+      labels: points.map((r) => {
+        const date =
+          typeof r.createdAt === "string" ? new Date(r.createdAt) : r.createdAt;
+        return date.toLocaleTimeString();
+      }),
+      datasets: [
+        {
+          label: "Temperatura (°C)",
+          data: points.map((r) => r.temperature),
+          borderColor: "rgb(75, 192, 192)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          tension: 0.1,
+        },
+      ],
+    };
+
+    console.log("Chart data result:", result);
+    return result;
+  }, [readings, fallbackData]);
+  // Memoized function to check temperature alerts
+  const checkTemperatureAlerts = useCallback(
+    (readings: TemperatureReading[]) => {
+      const newAlerts: any[] = [];
+
+      readings.forEach((reading) => {
+        const temp = reading.temperature;
+        const deviceName = reading.deviceId;
+
+        // Faixa ideal para vacinas: 2°C a 8°C
+        if (temp < 2) {
+          newAlerts.push({
+            id: `${reading._id}_cold`,
+            type: "critical",
+            deviceId: deviceName,
+            temperature: temp,
+            message: `🚨 CRÍTICO: Temperatura muito baixa (${temp}°C)`,
+            description: "Vacinas podem congelar e perder eficácia",
+            timestamp: new Date(reading.timestamp),
+          });
+        } else if (temp > 8) {
+          newAlerts.push({
+            id: `${reading._id}_hot`,
+            type: "critical",
+            deviceId: deviceName,
+            temperature: temp,
+            message: `🚨 CRÍTICO: Temperatura muito alta (${temp}°C)`,
+            description: "Vacinas podem perder potência e eficácia",
+            timestamp: new Date(reading.timestamp),
+          });
+        } else if (temp < 2.5 || temp > 7.5) {
+          newAlerts.push({
+            id: `${reading._id}_warning`,
+            type: "warning",
+            deviceId: deviceName,
+            temperature: temp,
+            message: `⚠️ ATENÇÃO: Temperatura próxima ao limite (${temp}°C)`,
+            description: "Monitorar de perto - pode afetar as vacinas",
+            timestamp: new Date(reading.timestamp),
+          });
+        }
+      });
+
+      setAlerts(newAlerts);
+    },
+    []
+  );
 
   useEffect(() => {
     const getTemperatureData = async () => {
@@ -233,10 +303,8 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
-
       {/* Painel de Notificações */}
       <NotificationPanel alerts={alerts} />
-
       {/* Informações sobre faixa ideal */}
       <div className="temperature-info">
         <div className="info-grid">
@@ -255,16 +323,14 @@ const Dashboard: React.FC = () => {
             <span className="update-time">A cada 30 segundos</span>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
       {/* Chart showing temperature over time */}
       <div className="chart-section">
         <div className="chart-card">
           <h2>Temperatura ao longo do tempo</h2>
-          <Line options={chartOptions} data={chartData} style={{ height: '300px' }} />
+          <TemperatureChart options={chartOptions} data={chartData} />
         </div>
       </div>
-
       {readings.length === 0 ? (
         <div className="no-data-state">
           <div className="no-data-icon">📡</div>
